@@ -5,7 +5,6 @@
 using namespace Tins;
 
 UdpTracert::UdpTracert(UdpSender& sender,GeoResolver& geo): sender(sender), geo(geo){
-    active_routes = std::unordered_map<std::string,int>();
     packet_sender = PacketSender();
 }
 
@@ -35,7 +34,7 @@ void UdpTracert::resolve_and_send(const std::string& target_ip, const std::strin
     std::string message;
     if (location) {
         message = 
-        "{\"type\":\"trace\"\"dest_ip\": \"" + target_ip + 
+        "{\"type\":\"trace\",\"dest_ip\": \"" + target_ip + 
         "\", \"hop_ip\": \"" + hop_ip +
         "\", \"ttl\": \"" + std::to_string(ttl) +
         "\", \"latitude\": \"" + std::to_string(location->latitude) + 

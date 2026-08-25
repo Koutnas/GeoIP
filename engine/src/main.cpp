@@ -8,28 +8,43 @@
 #include "UdpTracert.hpp"
 #include "TracertListener.hpp"
 #include "DnsResolver.hpp"
+#include "GeneralListener.hpp"
+#include "EngineConfig.cpp"
 
 
 
-int main() {
-        GeoResolver geo = GeoResolver("GeoLite2-City.mmdb");
-        UdpSender sender = UdpSender("127.0.0.1", 5005);
+int main(int argc, char* argv[]) {
+    try {
+        EngineConfig config = parse_args(argc, argv);
+
+        GeoResolver geo = GeoResolver(config.db_path);
+        UdpSender sender = UdpSender(config.target_host, config.dataport);
         UdpTracert tracert = UdpTracert(sender, geo);
         DnsResolver dns = DnsResolver(sender);
-        ThreadPool pool = ThreadPool(6);
-        TracertListener listener = TracertListener(tracert,pool);
+        ThreadPool pool = ThreadPool(config.threadcount);
+        TracertListener tracelistener = TracertListener(tracert,pool,config.interface_name);
+        GeneralListener genelistener = GeneralListener(tracert,dns,pool,config.interface_name);
 
-        std::thread listenThread([&listener](){
-                listener.listen_loop();
+
+        if (config.enable_traceroute) {
+            std::thread listenTrace([&tracelistener]() {
+                tracelistener.listen_loop();
+            });
+
+            std::thread generalist([&genelistener]() {
+                genelistener.listen_loop();
+            });
+                generalist.join();
+                listenTrace.join();
+        } else {
+            std::thread generalist([&genelistener]() {
+            genelistener.listen_loop();
         });
-        std::this_thread::sleep_for(std::chrono::seconds(5));
-        std::string test_ip = "93.190.48.13";
-
-        pool.enqueue([&dns,test_ip]() {
-                dns.reverse_lookup(test_ip);
-        });
-        tracert.init_route(test_ip);
-
-        listenThread.join();
-        return 0;
+            generalist.join();
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "Exception in main: " << e.what() << "\n";
+        return 1;
+    }
+    return 0;
 }

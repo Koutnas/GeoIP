@@ -42,9 +42,3 @@ target_include_directories(engine PRIVATE
     src 
     ${CMAKE_SOURCE_DIR}/include 
     ${tins_SOURCE_DIR}/include)
-
-
-add_custom_command(TARGET engine POST_BUILD
-    COMMAND sudo setcap cap_net_raw,cap_net_admin=eip $<TARGET_FILE:engine>
-    COMMENT "Elevating binary network capabilities..."
-)

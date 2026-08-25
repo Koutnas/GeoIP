@@ -2,13 +2,14 @@
 #include <tins/tins.h>
 using namespace Tins;
 
-TracertListener::TracertListener(UdpTracert& tracert,ThreadPool& pool): tracert(tracert), pool(pool){}
+TracertListener::TracertListener(UdpTracert& tracert,ThreadPool& pool,std::string& iface):tracert(tracert), pool(pool), iface(iface){}
 
 
 void TracertListener::listen_loop(){
     try {
-        std::string iface = NetworkInterface::default_interface().name();
-        std::cout << "Starting sniffer on interface: " << iface << "\n";
+    if(iface == ""){
+        iface = NetworkInterface::default_interface().name();
+    }
 
         SnifferConfiguration config;
         config.set_promisc_mode(false); 
