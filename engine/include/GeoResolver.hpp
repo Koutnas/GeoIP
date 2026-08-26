@@ -6,6 +6,7 @@
 struct GeoLocation {
     double latitude;
     double longitude;
+    std::string city_name;
 };
 
 class GeoResolver {
