@@ -5,16 +5,25 @@ export class GlobeView {
             .backgroundImageUrl('https://unpkg.com/three-globe/example/img/night-sky.png')
             .backgroundColor('#000000')
             .pointOfView({ lat: 50.0883, lng: 14.4124, altitude: 2.2 })
+            // --- ARC CONFIGURATION ---
+            
             .arcStartLat(d => d.startLat)
             .arcStartLng(d => d.startLng)
             .arcEndLat(d => d.endLat)
             .arcEndLng(d => d.endLng)
-            .arcColor(d => d.color || ['#00ffcc', '#ff0055'])
-            .arcDashLength(0.1)
-            .arcDashGap(0.01)
+            
+            // 1. The Color: Make the highlight a semi-transparent aura (alpha 0.4)
+            .arcColor(d => d.isHighlight ? 'rgba(0, 255, 170, 0.4)' : ['#00ffc8', '#0800ff'])
+            
+            // 2. The Thickness: Make the aura very fat, keep the base thin
+            .arcStroke(d => d.isHighlight ? 0.3 : 0.1)
+            .arcAltitudeAutoScale(d => d.isHighlight ? 0.4005 : 0.4)
+        
+            .arcDashLength(d => d.isHighlight ? 1 : 0.1)
+            .arcDashGap(d => d.isHighlight ? 0 : 0.05)
             .arcDashAnimateTime(5000)
-            .arcStroke(0.1)
-            .arcAltitudeAutoScale(0.2)
+            
+
             .htmlElementsData([]) // Starts empty
             .htmlLat(d => d.latitude)  
             .htmlLng(d => d.longitude)    
@@ -29,7 +38,7 @@ export class GlobeView {
                 let html = `<div style="background: rgba(0,0,0,0.9); padding: 8px; border: 1px solid #555; border-radius: 4px; font-family: sans-serif; font-size: 12px; color: #fff;">`;
                 html += `<strong>Location: ${d.city !== 'unknown' ? d.city : 'Unknown'}</strong><hr style="margin: 4px 0; border-color: #333;">`;
                 d.routers.sort((a, b) => a.ttl - b.ttl).forEach(router => {
-                    html += `TTL: ${router.ttl.toString().padStart(2, '0')} | IP: ${router.hop_ip}<br>`;
+                    html += `TTL: ${router.ttl.toString().padStart(2, '0')} | IP: ${router.hop_ip.padStart(12," ")} | dIP: ${router.target}<br>`;
                 });
                 
                 html += `</div>`;
