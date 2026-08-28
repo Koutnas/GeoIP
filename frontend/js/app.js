@@ -8,6 +8,15 @@ const view = new GlobeView('globeViz');
 let isPaused = true;
 let highlightArcs = [];
 
+// websocket for comunication between the frontend and backend
+const ws = new WebSocket('ws://localhost:8765');
+
+ws.onopen = () => console.log("Connected to Python backend");
+ws.onmessage = (event) => {
+    // This is where we will eventually receive the live C++ data!
+    console.log("Received from backend:", event.data);
+};
+
 
 function refreshMap() {
     view.renderArcs([...state.getArcs(), ...highlightArcs]);
@@ -73,17 +82,40 @@ const sidebar = new Sidebar({
         view.renderArcs([...state.getArcs(), ...highlightArcs]);
         sidebar.renderRoutes(state); 
     },
-   onTogglePlayback: () => {
-        isPaused = !isPaused; 
-        sidebar.setPlaybackState(isPaused); 
-        console.log(isPaused ? "Data stream paused" : "Data stream resumed");
+    onTogglePlayback: () => {
+        isPaused = !isPaused;
+        sidebar.setPlaybackState(isPaused);
+
+        if (isPaused) {
+            console.log("Sending kill signal to C++ engine...");
+            if (ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ type: "stop_engine" }));
+            }
+        } else {
+            // PLAY COMMAND INITIATED
+            console.log("Wiping frontend memory and starting engine...");
+            state.clear();
+            highlightArcs = [];
+            refreshMap();
+            sidebar.renderRoutes(state);
+            const config = sidebar.getSettings();
+            if (ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify(config));
+            } else {
+                console.error("WebSocket is not connected!");
+            }
+            
+            // 3. Auto-switch to routes view to watch incoming data
+            sidebar.setTab('routes'); 
+        }
     },
     onSettingsClick: () => {
         console.log("Settings panel opened");
-        // TODO: Implement settings modal
+        sidebar.setTab('settings');
     },
     onRoutesClick: () => {
         console.log("Routes tab clicked");
+        sidebar.setTab('routes');
         sidebar.renderRoutes(state);
     }
 });
@@ -116,3 +148,5 @@ mockData.forEach(payload => {
 
 // Pass the processed data to the WebGL View
 refreshMap();
+sidebar.setTab('routes');
+sidebar.renderRoutes(state);

@@ -2,3 +2,4 @@ build
 InternalDep.txt
 GeoLite2-City.mmdb
 .vscode
+.venv

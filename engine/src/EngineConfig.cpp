@@ -5,7 +5,7 @@
 // Holds all our engine settings in one neat package
 struct EngineConfig {
     int dataport = 5005;
-    int threadcount = 6;
+    int threadcount = 4;
     std::string target_host = "127.0.0.1";
     std::string db_path = "GeoLite2-City.mmdb";
     std::string interface_name = ""; // Empty string tells the engine to auto-detect
@@ -46,7 +46,7 @@ EngineConfig parse_args(int argc, char* argv[]) {
                       << "  --db <path>            Path to GeoIP DB (default: GeoLite2-City.mmdb)\n"
                       << "  --iface <name>         Network interface to read (default: auto)\n"
                       << "  --traceroute <bool>    Enable/disable active tracing (default: true)\n"
-                      << "  --threads <num>        Number of active threads in worker pool (default: 6)\n";
+                      << "  --threads <num>        Number of active threads in worker pool (default: 4)\n";
             exit(0);
         }
         else {

@@ -39,7 +39,7 @@ void UdpTracert::resolve_and_send(const std::string& target_ip, const std::strin
         "\", \"ttl\": \"" + std::to_string(ttl) +
         "\", \"latitude\": \"" + std::to_string(location->latitude) + 
         "\", \"longitude\": \"" + std::to_string(location->longitude) + "\""+
-        "\"city\":\"" + ((location->city_name == "") ?"unknown":location->city_name) + "\"}\n";
+        ",\"city\":\"" + ((location->city_name == "") ?"\"unknown\"":location->city_name) + "\"}\n";
     } else {
         message = 
         "{\"type\":\"trace\",\"dest_ip\": \"" + target_ip + 

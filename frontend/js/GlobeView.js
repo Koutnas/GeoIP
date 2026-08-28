@@ -31,7 +31,7 @@ export class GlobeView {
             .pointLat(d => d.lat)
             .pointLng(d => d.lng)
             .pointColor(() => '#00ffaa')
-            .pointRadius(0.08)
+            .pointRadius(0.16)
             .pointAltitude(0.001)
             .pointLabel(d => {
                 // Build a single tooltip that lists ALL routers at this coordinate

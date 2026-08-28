@@ -70,4 +70,11 @@ export class RouteState {
     setSelected(destIp){
         this.selectedTarget = destIp;
     }
+    clear() {
+        this.routes.clear();
+        this.hostnames.clear();
+        this.persistentArcs = [];
+        this.persistentPoints.clear();
+        this.selectedTarget = null;
+    }
 }

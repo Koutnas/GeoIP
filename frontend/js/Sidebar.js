@@ -4,6 +4,7 @@ export class Sidebar {
         this.routeList = document.getElementById('routeList');
         this.playIcon = document.querySelector('.icon-play');
         this.pauseIcon = document.querySelector('.icon-pause');
+        this.settingsPanel = document.getElementById('settingsPanel');
         
         this._setupIconListeners();
     }
@@ -51,5 +52,27 @@ export class Sidebar {
             li.onclick = () => this.callbacks.onRouteSelect(destIp);
             this.routeList.appendChild(li);
         }
+    }
+
+    setTab(tabName) {
+        if (tabName === 'settings') {
+            this.routeList.style.display = 'none';
+            this.settingsPanel.style.display = 'block';
+        } else if (tabName === 'routes') {
+            this.settingsPanel.style.display = 'none';
+            this.routeList.style.display = 'block';
+        }
+    }
+
+    getSettings() {
+        return {
+            type: "start_engine",
+            hostIp: document.getElementById('HostIP').value || "127.0.0.1",
+            dataPort: document.getElementById('dataPort').value || "5005",
+            ifName: document.getElementById('ifName').value,
+            dbPath: document.getElementById('dbPath').value,
+            threadCount: document.getElementById('threadCount').value || "4",
+            traceRoute: document.getElementById('traceRoute').checked
+        };
     }
 }
