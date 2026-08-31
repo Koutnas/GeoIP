@@ -36,7 +36,6 @@ export class RouteState {
                 }
             }
         }
-
         // 4. Update the Point Cache (Fixing the undefined IP bug)
         const coordKey = `${payload.latitude},${payload.longitude}`;
         if (!this.persistentPoints.has(coordKey)) {
@@ -47,7 +46,6 @@ export class RouteState {
                 routers: [] 
             });
         }
-        
         this.persistentPoints.get(coordKey).routers.push({
             ttl: payload.ttl,
             hop_ip: payload.hop_ip,

@@ -8,50 +8,33 @@ const view = new GlobeView('globeViz');
 let isPaused = true;
 let highlightArcs = [];
 
-// websocket for comunication between the frontend and backend
-const ws = new WebSocket('ws://localhost:8765');
+const controlWs = new WebSocket('ws://localhost:8765');
+const dataWs = new WebSocket('ws://localhost:8766');
 
-ws.onopen = () => console.log("Connected to Python backend");
-ws.onmessage = (event) => {
-    // This is where we will eventually receive the live C++ data!
-    console.log("Received from backend:", event.data);
+dataWs.onmessage = (event) => {
+    if (!isPaused) {
+        try {
+            const payload = JSON.parse(event.data);
+            if (payload.type === "trace") {
+                state.addHop(payload);
+                refreshMap(); 
+                sidebar.renderRoutes(state);
+            } else if (payload.type === "dns") {
+                if (payload.hostname !== "unknown") {
+                    state.setHostname(payload.ip, payload.hostname);
+                    sidebar.renderRoutes(state);
+                }
+            }
+        } catch (e) {
+            console.error("Failed to parse C++ payload:", e);
+        }
+    }
 };
-
 
 function refreshMap() {
     view.renderArcs([...state.getArcs(), ...highlightArcs]);
     view.renderActiveHops([...state.getPoints()]);
 }
-
-// 2. Paste some of your actual engine output here
-const mockData = [
-    {"type":"trace","dest_ip": "4.150.223.105", "hop_ip": "4.150.223.105", "ttl": "0", "latitude": "41.601500", "longitude": "-93.612700","city":"Des Moines"},
-    {"type":"trace","dest_ip": "4.150.223.105", "hop_ip": "192.168.0.1", "ttl": "1", "latitude": "unknown", "longitude": "unknown","city":"unknown"},
-    {"type":"trace","dest_ip": "4.150.223.105", "hop_ip": "62.141.11.97", "ttl": "2", "latitude": "50.147700", "longitude": "14.100500","city":"Kladno"},
-    {"type":"trace","dest_ip": "4.150.223.105", "hop_ip": "51.10.27.104", "ttl": "8", "latitude": "51.496400", "longitude": "-0.122400","city":"unknown"},
-    {"type":"trace","dest_ip": "4.150.223.105", "hop_ip": "51.10.4.48", "ttl": "11", "latitude": "51.496400", "longitude": "-0.122400","city":"unknown"},
-    {"type":"trace","dest_ip": "4.150.223.105", "hop_ip": "104.44.29.93", "ttl": "6", "latitude": "37.751000", "longitude": "-97.822000","city":"unknown"},
-    {"type":"trace","dest_ip": "4.150.223.105", "hop_ip": "104.44.33.137", "ttl": "5", "latitude": "37.751000", "longitude": "-97.822000","city":"unknown"},
-    {"type":"trace","dest_ip": "4.150.223.105", "hop_ip": "104.44.31.39", "ttl": "9", "latitude": "37.751000", "longitude": "-97.822000","city":"unknown"},
-    {"type":"trace","dest_ip": "4.150.223.105", "hop_ip": "104.44.7.103", "ttl": "14", "latitude": "37.751000", "longitude": "-97.822000","city":"unknown"},
-    {"type":"trace","dest_ip": "4.150.223.105", "hop_ip": "51.10.9.203", "ttl": "13", "latitude": "51.496400", "longitude": "-0.122400","city":"unknown"},
-    {"type":"trace","dest_ip": "4.150.223.105", "hop_ip": "104.44.54.234", "ttl": "15", "latitude": "37.751000", "longitude": "-97.822000","city":"unknown"},
-    {"type":"trace","dest_ip": "4.150.223.105", "hop_ip": "51.10.16.0", "ttl": "16", "latitude": "51.496400", "longitude": "-0.122400","city":"unknown"},
-    {"type":"trace","dest_ip": "4.150.223.105", "hop_ip": "51.10.34.251", "ttl": "12", "latitude": "51.496400", "longitude": "-0.122400","city":"unknown"},
-    {"type":"trace","dest_ip": "54.253.67.150", "hop_ip": "54.253.67.150", "ttl": "0", "latitude": "-33.867200", "longitude": "151.199700","city":"Sydney"},
-    {"type":"trace","dest_ip": "54.253.67.150", "hop_ip": "10.92.6.149", "ttl": "3", "latitude": "unknown", "longitude": "unknown","city":"unknown"},
-    {"type":"trace","dest_ip": "54.253.67.150", "hop_ip": "192.168.0.1", "ttl": "1", "latitude": "unknown", "longitude": "unknown","city":"unknown"},
-    {"type":"trace","dest_ip": "54.253.67.150", "hop_ip": "62.141.11.97", "ttl": "2", "latitude": "50.147700", "longitude": "14.100500","city":"Kladno"},
-    {"type":"trace","dest_ip": "54.253.67.150", "hop_ip": "62.115.139.104", "ttl": "10", "latitude": "48.858200", "longitude": "2.338700","city":"unknown"},
-    {"type":"trace","dest_ip": "54.253.67.150", "hop_ip": "62.115.124.26", "ttl": "5", "latitude": "48.858200", "longitude": "2.338700","city":"unknown"},
-    {"type":"trace","dest_ip": "54.253.67.150", "hop_ip": "62.115.139.33", "ttl": "8", "latitude": "48.858200", "longitude": "2.338700","city":"unknown"},
-    {"type":"trace","dest_ip": "54.253.67.150", "hop_ip": "62.115.139.17", "ttl": "11", "latitude": "48.858200", "longitude": "2.338700","city":"unknown"},
-    {"type":"trace","dest_ip": "54.253.67.150", "hop_ip": "62.115.139.244", "ttl": "7", "latitude": "48.858200", "longitude": "2.338700","city":"unknown"},
-    {"type":"trace","dest_ip": "54.253.67.150", "hop_ip": "62.115.115.76", "ttl": "9", "latitude": "48.858200", "longitude": "2.338700","city":"unknown"},
-
-];
-
-const groupedHops = new Map();
 
 const sidebar = new Sidebar({
     onRouteSelect: (destIp) => {
@@ -88,19 +71,18 @@ const sidebar = new Sidebar({
 
         if (isPaused) {
             console.log("Sending kill signal to C++ engine...");
-            if (ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({ type: "stop_engine" }));
+            if (controlWs.readyState === WebSocket.OPEN) {
+                controlWs.send(JSON.stringify({ type: "stop_engine" }));
             }
         } else {
-            // PLAY COMMAND INITIATED
             console.log("Wiping frontend memory and starting engine...");
             state.clear();
             highlightArcs = [];
             refreshMap();
             sidebar.renderRoutes(state);
             const config = sidebar.getSettings();
-            if (ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify(config));
+            if (controlWs.readyState === WebSocket.OPEN) {
+                controlWs.send(JSON.stringify(config));
             } else {
                 console.error("WebSocket is not connected!");
             }
@@ -117,32 +99,6 @@ const sidebar = new Sidebar({
         console.log("Routes tab clicked");
         sidebar.setTab('routes');
         sidebar.renderRoutes(state);
-    }
-});
-
-// Process the mock data ONCE
-mockData.forEach(payload => {
-    if (payload.type === 'trace') {
-        
-        state.addHop(payload);
-        
-        // 2. Group the data for the dots/tooltips
-        if (payload.latitude !== 'unknown' && payload.longitude !== 'unknown') {
-            const coordKey = `${payload.latitude},${payload.longitude}`;
-            
-            if (!groupedHops.has(coordKey)) {
-                groupedHops.set(coordKey, {
-                    lat: payload.latitude,
-                    lng: payload.longitude,
-                    city: payload.city,
-                    routers: [] // Array to hold all routers at this exact spot
-                });
-            }
-            groupedHops.get(coordKey).routers.push(payload);
-        }
-        
-    } else if (payload.type === 'dns') {
-        state.setHostname(payload.ip, payload.hostname);
     }
 });
 

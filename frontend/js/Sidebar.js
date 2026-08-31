@@ -46,7 +46,12 @@ export class Sidebar {
                 li.classList.add('route-selected');
             }
             
-            const name = state.hostnames.get(destIp) || destIp;
+            let name;
+            if(state.hostnames.get(destIp)){
+                name = state.hostnames.get(destIp) + " ["+destIp+"]";
+            } else {
+                name = destIp;
+            }
             li.textContent = name;
 
             li.onclick = () => this.callbacks.onRouteSelect(destIp);
@@ -72,7 +77,7 @@ export class Sidebar {
             ifName: document.getElementById('ifName').value,
             dbPath: document.getElementById('dbPath').value,
             threadCount: document.getElementById('threadCount').value || "4",
-            traceRoute: document.getElementById('traceRoute').checked
+            traceRoute: !document.getElementById('traceRoute').checked
         };
     }
 }
