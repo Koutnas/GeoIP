@@ -5,7 +5,7 @@
 ![WebGL](https://img.shields.io/badge/WebGL-990000?style=flat&logo=webgl&logoColor=white)
 ![Linux](https://img.shields.io/badge/Linux-FCC624?style=flat&logo=linux&logoColor=black)
 
-<video src="resources/demonstration.mp4" autoplay loop muted playsinline width="100%"></video>
+https://github.com/user-attachments/assets/51369021-a92d-4b8b-8601-d2d5e44c8ac4
 
 ## Key Features - Basic description
 **GeoIPv4 Visualizer** is multi-language based project, focused on displaying live interface traffic on interactive map. It is strictly focused on IPv4 comunication. It has the ability to resolve not only the location of the source or destination traffic, but also the traffics taken path, using custom built UDP based traceroute. Both of which are rendered on the map.
